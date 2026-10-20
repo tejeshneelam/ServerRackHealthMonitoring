@@ -1,0 +1,21 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+venv/
+env/
+ENV/
+
+# Large media files (videos & raw camera bursts)
+*.MOV
+*.mov
+*.HEIC
+*.mp4
+
+# Temporary logs & data
+latest_data.json

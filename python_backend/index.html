@@ -1,0 +1,1558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Data Center Rack Health Monitor | Cyber-Physical Digital Twin & Edge ML</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800;900&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    :root {
+      --bg-primary: #07090e;
+      --bg-surface: rgba(18, 24, 38, 0.78);
+      --bg-card: rgba(26, 35, 54, 0.65);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-highlight: rgba(56, 189, 248, 0.25);
+      --text-main: #f3f4f6;
+      --text-muted: #94a3b8;
+      --accent-cyan: #06b6d4;
+      --accent-sky: #38bdf8;
+      --accent-blue: #3b82f6;
+      --accent-green: #10b981;
+      --accent-warning: #f59e0b;
+      --accent-danger: #ef4444;
+      --accent-purple: #8b5cf6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: radial-gradient(circle at 15% 10%, #0f172a 0%, #07090e 100%);
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      padding: 20px;
+    }
+
+    /* Top Navigation Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      background: var(--bg-surface);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      margin-bottom: 18px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+
+    .header-left h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 23px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header-left p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    .header-badges {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 7px 14px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent-green);
+    }
+
+    .ai-engine-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(139, 92, 246, 0.12);
+      border: 1px solid rgba(139, 92, 246, 0.35);
+      padding: 7px 14px;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #a78bfa;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--accent-green);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--accent-green);
+      animation: pulse 1.8s infinite;
+    }
+
+    .pulse-dot-purple {
+      width: 8px;
+      height: 8px;
+      background: #a78bfa;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #a78bfa;
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    /* SECTION 1: EDGE AI & PREDICTIVE METRICS BANNER (WOW FACTOR) */
+    .ai-banner {
+      background: linear-gradient(135deg, rgba(30, 27, 75, 0.5) 0%, rgba(15, 23, 42, 0.8) 100%);
+      border: 1px solid rgba(139, 92, 246, 0.3);
+      border-radius: 16px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px -10px rgba(139, 92, 246, 0.2);
+    }
+
+    .ai-banner-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      padding-bottom: 10px;
+    }
+
+    .ai-banner-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: #c084fc;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .ai-banner-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: 'Fira Code', monospace;
+    }
+
+    .ai-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
+    }
+
+    .ai-card {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 14px 16px;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.2s ease;
+    }
+
+    .ai-card:hover {
+      border-color: rgba(192, 132, 252, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .ai-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, #38bdf8, #818cf8, #c084fc);
+    }
+
+    .ai-card-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .ai-card-value {
+      font-family: 'Outfit', sans-serif;
+      font-size: 26px;
+      font-weight: 800;
+      color: #ffffff;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+
+    .ai-card-unit {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .ai-card-desc {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .health-bar-container {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+
+    .health-bar-fill {
+      height: 100%;
+      width: 95%;
+      background: linear-gradient(90deg, #10b981, #38bdf8);
+      border-radius: 999px;
+      transition: width 0.5s ease, background 0.5s ease;
+    }
+
+    /* SECTION 2: HARDWARE SENSOR TELEMETRY METRICS */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .metric-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .metric-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .metric-title {
+      font-size: 11.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .metric-value {
+      font-family: 'Outfit', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .metric-sub {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* SECTION 3: 3D DIGITAL TWIN + CAUSAL ENGINE */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 2fr 1.15fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 1080px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      background: var(--bg-surface);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .panel-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .camera-presets {
+      display: flex;
+      gap: 6px;
+    }
+
+    .preset-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .preset-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+    }
+
+    #rack-3d-div {
+      width: 100%;
+      height: 480px;
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    /* Causal Status Card */
+    .status-card {
+      padding: 16px;
+      border-radius: 12px;
+      text-align: center;
+      margin-bottom: 18px;
+      border: 1px solid transparent;
+      transition: all 0.3s ease;
+    }
+
+    .status-badge {
+      font-family: 'Outfit', sans-serif;
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .status-explanation {
+      font-size: 12.5px;
+      line-height: 1.45;
+      opacity: 0.95;
+    }
+
+    .status-nominal {
+      background: rgba(16, 185, 129, 0.12);
+      border-color: rgba(16, 185, 129, 0.35);
+      color: #34d399;
+    }
+
+    .status-warning {
+      background: rgba(245, 158, 11, 0.12);
+      border-color: rgba(245, 158, 11, 0.35);
+      color: #fbbf24;
+    }
+
+    .status-danger {
+      background: rgba(239, 68, 68, 0.12);
+      border-color: rgba(239, 68, 68, 0.35);
+      color: #f87171;
+    }
+
+    /* Node status items */
+    .nodes-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .node-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-card);
+      padding: 9px 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      font-size: 12.5px;
+    }
+
+    .node-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+      font-size: 11.5px;
+    }
+
+    .dot-active {
+      color: var(--accent-danger);
+    }
+    .dot-inactive {
+      color: var(--text-muted);
+    }
+
+    /* Actuator Box */
+    .actuator-box {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin-bottom: 18px;
+    }
+
+    .actuator-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .actuator-state {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 14.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .state-on {
+      color: #38bdf8;
+    }
+    .state-off {
+      color: var(--text-muted);
+    }
+
+    .fan-icon {
+      display: inline-block;
+      transition: transform 0.2s;
+    }
+
+    .fan-spinning {
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Probe Grid */
+    .probe-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+
+    .probe-card {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 8px 10px;
+      text-align: center;
+    }
+
+    .probe-name {
+      font-size: 10.5px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .probe-temp {
+      font-family: 'Outfit', sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+      margin-top: 3px;
+      color: #38bdf8;
+    }
+
+    /* SECTION 4: DEEP AI ANALYTICS GRID (TRAJECTORY + XAI SHAP) */
+    .deep-ai-grid {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    @media (max-width: 1080px) {
+      .deep-ai-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    #trajectory-chart-div {
+      width: 100%;
+      height: 380px;
+      border-radius: 12px;
+    }
+
+    /* XAI SHAP Feature Attribution Bars */
+    .shap-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 8px;
+    }
+
+    .shap-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .shap-label-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+
+    .shap-name {
+      color: var(--text-main);
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .shap-pct {
+      font-family: 'Fira Code', monospace;
+      font-weight: 600;
+      color: #38bdf8;
+    }
+
+    .shap-bar-bg {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .shap-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+      border-radius: 999px;
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .shap-math-note {
+      margin-top: 16px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px dashed rgba(255, 255, 255, 0.1);
+      font-size: 11.5px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .shap-math-note code {
+      font-family: 'Fira Code', monospace;
+      color: #a78bfa;
+    }
+
+    .instruction-footer {
+      margin-top: 14px;
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    /* DIGITAL TWIN SCENARIO SWITCHBOARD */
+    .scenario-panel {
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid rgba(192, 132, 252, 0.35);
+      border-radius: 14px;
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    }
+
+    .scenario-panel-header {
+      margin-bottom: 12px;
+    }
+
+    .scenario-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffffff;
+      flex-wrap: wrap;
+    }
+
+    .scenario-badge {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: rgba(192, 132, 252, 0.2);
+      border: 1px solid rgba(192, 132, 252, 0.4);
+      color: #c084fc;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .scenario-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .scenario-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .scenario-btn {
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 8px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      color: #ffffff;
+      transition: all 0.2s ease;
+      text-align: left;
+    }
+
+    .scenario-btn:hover {
+      background: rgba(51, 65, 85, 0.85);
+      border-color: rgba(56, 189, 248, 0.5);
+      transform: translateY(-1px);
+    }
+
+    .scenario-btn.active {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: #38bdf8;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+    }
+
+    .btn-icon {
+      font-size: 18px;
+    }
+
+    .btn-text {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .btn-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .btn-sub {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Header -->
+  <header>
+    <div class="header-left">
+      <h1>AI DATA CENTER RACK HEALTH MONITOR</h1>
+      <p>PI-SSET Sparse Physics Twin &bull; Multivariate Isolation Forest &bull; Taylor Horizon Forecaster &bull; XAI Attribution</p>
+    </div>
+    <div class="header-badges">
+      <div class="ai-engine-badge">
+        <div class="pulse-dot-purple"></div>
+        <span>EDGE AI ACTIVE</span>
+      </div>
+      <div class="header-badge">
+        <div class="pulse-dot"></div>
+        <span id="stream-status">LIVE TELEMETRY</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- SECTION 1: EDGE AI & PREDICTIVE METRICS BANNER (WOW FACTOR) -->
+  <div class="ai-banner">
+    <div class="ai-banner-header">
+      <div class="ai-banner-title">
+        <span>⚡ Real-Time Cyber-Physical Edge AI Intelligence Center</span>
+      </div>
+      <div class="ai-banner-subtitle">
+        Model: IsolationForest(N=80) + Mahalanobis(χ²_7) + Taylor AR(2) + Arrhenius RUL
+      </div>
+    </div>
+
+    <div class="ai-cards-grid">
+      <!-- Card 1: Rack Health Index -->
+      <div class="ai-card">
+        <div class="ai-card-title">
+          <span>Rack Health Index (RHI)</span>
+          <span style="color: var(--accent-green);">● OPTIMAL</span>
+        </div>
+        <div class="ai-card-value">
+          <span id="ai-rhi-val">97.5</span>
+          <span class="ai-card-unit">%</span>
+        </div>
+        <div class="health-bar-container">
+          <div class="health-bar-fill" id="ai-rhi-bar"></div>
+        </div>
+        <div class="ai-card-desc">
+          <span>Degradation: Non-linear exp(-λS)</span>
+        </div>
+      </div>
+
+      <!-- Card 2: Multivariate Anomaly Risk Score -->
+      <div class="ai-card">
+        <div class="ai-card-title">
+          <span>Multivariate Anomaly Risk</span>
+          <span id="ai-risk-status" style="color: #38bdf8;">SAFE</span>
+        </div>
+        <div class="ai-card-value">
+          <span id="ai-risk-val">8.2</span>
+          <span class="ai-card-unit">%</span>
+        </div>
+        <div class="health-bar-container">
+          <div class="health-bar-fill" id="ai-risk-bar" style="width: 8.2%; background: linear-gradient(90deg, #38bdf8, #f59e0b);"></div>
+        </div>
+        <div class="ai-card-desc">
+          <span>Covariance distance: D_M &lt; 2.1σ</span>
+        </div>
+      </div>
+
+      <!-- Card 3: Thermal Derivatives (dT/dt and d2T/dt2) -->
+      <div class="ai-card">
+        <div class="ai-card-title">
+          <span>Thermal Velocity & Accel</span>
+          <span style="color: #c084fc;">DERIVATIVE ENGINE</span>
+        </div>
+        <div class="ai-card-value">
+          <span id="ai-vel-val">+0.04</span>
+          <span class="ai-card-unit">°C/min</span>
+        </div>
+        <div class="ai-card-desc" style="margin-top: 8px;">
+          <span>Acceleration: <b id="ai-acc-val" style="color: #ffffff;">+0.00 °C/min²</b></span>
+        </div>
+        <div class="ai-card-desc">
+          <span>Curvature: 2nd-order Taylor filter</span>
+        </div>
+      </div>
+
+      <!-- Card 4: Predictive Horizon & Remaining Useful Time to Trip (RUTT) -->
+      <div class="ai-card">
+        <div class="ai-card-title">
+          <span>Predictive Horizon (t+30s)</span>
+          <span id="ai-actuation-badge" style="color: #38bdf8;">STANDBY</span>
+        </div>
+        <div class="ai-card-value">
+          <span id="ai-pred30-val">28.4</span>
+          <span class="ai-card-unit">°C</span>
+        </div>
+        <div class="ai-card-desc" style="margin-top: 8px;">
+          <span>RUTT to 31.5°C: <b id="ai-rutt-val" style="color: #34d399;">SAFE (&gt;10 min)</b></span>
+        </div>
+        <div class="ai-card-desc">
+          <span>Pre-emptive trigger: <span id="ai-preemptive-mode" style="color: #94a3b8;">NO INERTIA OVERRUN</span></span>
+        </div>
+      </div>
+
+      <!-- Card 5: Silicon Degradation & Component Remaining Useful Life (RUL) -->
+      <div class="ai-card">
+        <div class="ai-card-title">
+          <span>Silicon Aging & Component RUL</span>
+          <span id="ai-aging-badge" style="color: #38bdf8;">1.00x BASELINE</span>
+        </div>
+        <div class="ai-card-value">
+          <span id="ai-rul-val">1825</span>
+          <span class="ai-card-unit">Days</span>
+        </div>
+        <div class="ai-card-desc" style="margin-top: 8px;">
+          <span>Physics Model: <b id="ai-aging-factor" style="color: #38bdf8;">Arrhenius (Ea=0.7 eV)</b></span>
+        </div>
+        <div class="ai-card-desc">
+          <span>Electromigration MTTF degradation</span>
+        </div>
+      </div>
+
+      <!-- Card 6: Thermodynamics & Power Usage Effectiveness (PUE) -->
+      <div class="ai-card">
+        <div class="ai-card-title">
+          <span>Heat Removal & PUE</span>
+          <span id="ai-pue-badge" style="color: #34d399;">GREEN COMPUTE</span>
+        </div>
+        <div class="ai-card-value">
+          <span id="ai-pue-val">1.082</span>
+          <span class="ai-card-unit">PUE Ratio</span>
+        </div>
+        <div class="ai-card-desc" style="margin-top: 8px;">
+          <span>Dissipated Heat: <b id="ai-heat-val" style="color: #ffffff;">24.5 W</b></span>
+        </div>
+        <div class="ai-card-desc">
+          <span>Enthalpy: Q = m_dot · Cp · ΔT</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 2: HARDWARE SENSOR TELEMETRY METRICS -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-title">🌡️ Ambient Environment</div>
+      <div class="metric-value" id="val-amb-temp">--.- °C</div>
+      <div class="metric-sub" id="val-amb-hum">Humidity: --%</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-title">🔥 Peak Core Hotspot</div>
+      <div class="metric-value" id="val-peak-temp">--.- °C</div>
+      <div class="metric-sub" id="val-peak-probe">Max Probe: --</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-title">💨 Gas / Smoke Sensor</div>
+      <div class="metric-value" id="val-gas-adc">-- ADC</div>
+      <div class="metric-sub" id="val-gas-volt">Analog: -.-- V</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-title">📳 Mechanical Vibration</div>
+      <div class="metric-value" id="val-vibe-count">0 taps</div>
+      <div class="metric-sub" id="val-vibe-state">Status: IDLE</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-title">💾 Local NVS Database (Rubric 2)</div>
+      <div class="metric-value" id="val-power-mw">Boot #--</div>
+      <div class="metric-sub" id="val-pue">All-Time Peak: --.- °C</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-title">🔌 Isolated Power Rail</div>
+      <div class="metric-value" id="val-bus-volt">5.00 V (MB-102)</div>
+      <div class="metric-sub" id="val-curr-ma">Relay Fan: Standby (0 mA)</div>
+    </div>
+  </div>
+
+  <!-- SECTION 3: 3D DIGITAL TWIN + CAUSAL ENGINE -->
+  <div class="main-grid">
+    <!-- Left: 3D Heatmap Twin -->
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">
+            <span>🧊 PI-SSET 3D Thermal Digital Twin</span>
+          </div>
+          <div class="panel-subtitle">Physics-Informed Sparse Spatial Reconstruction &bull; 2,197 Volumetric Mesh Nodes</div>
+        </div>
+        <div class="camera-presets">
+          <button class="preset-btn" onclick="resetCamera('isometric')">Default View</button>
+          <button class="preset-btn" onclick="resetCamera('top')">Top View</button>
+          <button class="preset-btn" onclick="resetCamera('side')">Side View</button>
+        </div>
+      </div>
+
+      <div id="rack-3d-div"></div>
+
+      <div class="instruction-footer">
+        ✨ <b>Zero-Flicker Continuous WebGL:</b> Click & drag to rotate, scroll to zoom. Camera orientation is <b>100% locked</b> while thermal fields interpolate live.
+      </div>
+    </div>
+
+    <!-- Right: E-CSGI Causal Graph & Relay Actuation -->
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">
+            <span>⚡ E-CSGI Fault Diagnosis</span>
+          </div>
+          <div class="panel-subtitle">Edge Causal Directed Acyclic Graph & Isolation</div>
+        </div>
+      </div>
+
+      <!-- Root Cause Status Badge -->
+      <div class="status-card status-nominal" id="causal-card">
+        <div class="status-badge" id="causal-badge">SYSTEM NOMINAL</div>
+        <div class="status-explanation" id="causal-desc">
+          All rack thermal, environmental, and mechanical nodes operating within baseline parameters.
+        </div>
+      </div>
+
+      <!-- Causal Network Nodes -->
+      <div class="nodes-list">
+        <div class="node-item">
+          <span>Core Thermal Hotspot (&ge; 31.5°C)</span>
+          <span class="node-indicator dot-inactive" id="node-thermal">⚪ SAFE</span>
+        </div>
+        <div class="node-item">
+          <span>Fan Mechanical Vibration</span>
+          <span class="node-indicator dot-inactive" id="node-vibe">⚪ IDLE</span>
+        </div>
+        <div class="node-item">
+          <span>Toxic Gas / Smoke Hazard</span>
+          <span class="node-indicator dot-inactive" id="node-gas">⚪ SAFE</span>
+        </div>
+      </div>
+
+      <!-- Actuator Control -->
+      <div class="actuator-box">
+        <div class="actuator-header">
+          <span style="font-size: 12.5px; color: var(--text-muted); font-weight: 600;">AUTONOMOUS COOLING ACTUATION</span>
+          <span style="font-size: 11px; color: var(--accent-cyan);">GPIO 5 &bull; OPTO-ISOLATED</span>
+        </div>
+        <div class="actuator-state">
+          <span class="fan-icon" id="fan-icon">🌀</span>
+          <span id="actuator-label" class="state-off">STANDBY (RELAY OFF)</span>
+        </div>
+      </div>
+
+      <!-- Probe Hierarchy Breakdown -->
+      <div class="probe-grid">
+        <div class="probe-card">
+          <div class="probe-name">Tier 4 (Top Exhaust)</div>
+          <div class="probe-temp" id="t4-val">--.- °C</div>
+        </div>
+        <div class="probe-card">
+          <div class="probe-name">Tier 3 (Upper Mid)</div>
+          <div class="probe-temp" id="t3-val">--.- °C</div>
+        </div>
+        <div class="probe-card">
+          <div class="probe-name">Tier 2 (Lower Mid)</div>
+          <div class="probe-temp" id="t2-val">--.- °C</div>
+        </div>
+        <div class="probe-card">
+          <div class="probe-name">Tier 1 (Bottom Intake)</div>
+          <div class="probe-temp" id="t1-val">--.- °C</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 4: DEEP AI ANALYTICS GRID (WOW FACTOR) -->
+  <div class="deep-ai-grid">
+    <!-- Left: Multi-Step Predictive Thermal Trajectory Forecaster -->
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">
+            <span>📈 Multi-Step Predictive Thermal Forecaster</span>
+          </div>
+          <div class="panel-subtitle">
+            Taylor 2nd-Order Auto-Regressive Horizon Model: T̂(t+Δt) = T(t) + ṪΔt + ½T̈Δt²
+          </div>
+        </div>
+      </div>
+
+      <div id="trajectory-chart-div"></div>
+
+      <div class="instruction-footer">
+        🔮 <b>Pre-Emptive Actuation Advantage:</b> The AI forecasts thermal overshoot 30-60s ahead of time. Unlike 8th-grade static threshold scripts that wait for 31.5°C to be crossed, this system pre-cools to eliminate thermal inertia runaway.
+      </div>
+    </div>
+
+    <!-- Right: Real-Time Explainable AI (XAI / SHAP-Style Feature Attribution) -->
+    <div class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">
+            <span>🧠 Explainable AI (XAI) Attribution</span>
+          </div>
+          <div class="panel-subtitle">
+            SHAP-Style Marginal Anomaly Decomposition Across 7 Dimensions
+          </div>
+        </div>
+      </div>
+
+      <div class="shap-container" id="shap-container">
+        <!-- Dynamically rendered feature bars -->
+      </div>
+
+      <div class="shap-math-note">
+        <b>Mathematical Foundation:</b> Marginal gradient contribution to Mahalanobis divergence:
+        <br>
+        <code>φ_i = |(Σ⁻¹(x - μ))_i (x_i - μ_i)| / Σ_j |(Σ⁻¹(x - μ))_j (x_j - μ_j)| × 100%</code>
+        <br>
+        Provides mathematical transparency into why an anomaly or state drift was triggered.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let isPlotInitialized = false;
+    let isTrajectoryInitialized = false;
+    const GRID_RES = 13; // 13x13x13 = 2197 interpolation points
+
+    // 1. Physics-Informed Sparse Thermal Field Interpolation (PI-SSET)
+    function compute3DThermalField(t1, t2, t3, t4) {
+      const xs = [], ys = [], zs = [], values = [];
+      const probes = [
+        { x: 0.5, y: 0.5, z: 0.1, t: t1 }, // T1: Bottom intake
+        { x: 0.5, y: 0.5, z: 0.4, t: t2 }, // T2: Lower mid
+        { x: 0.5, y: 0.5, z: 0.7, t: t3 }, // T3: Upper mid
+        { x: 0.5, y: 0.5, z: 1.0, t: t4 }  // T4: Top exhaust
+      ];
+
+      const minTemp = Math.min(t1, t2, t3, t4);
+      const ambTemp = minTemp - 1.2;
+      const boundaries = [
+        { x: 0, y: 0, z: 0, t: ambTemp }, { x: 1, y: 0, z: 0, t: ambTemp },
+        { x: 0, y: 1, z: 0, t: ambTemp }, { x: 1, y: 1, z: 0, t: ambTemp },
+        { x: 0, y: 0, z: 1, t: ambTemp }, { x: 1, y: 0, z: 1, t: ambTemp },
+        { x: 0, y: 1, z: 1, t: ambTemp }, { x: 1, y: 1, z: 1, t: ambTemp }
+      ];
+
+      const allNodes = probes.concat(boundaries);
+      const eps = 0.035;
+
+      for (let i = 0; i < GRID_RES; i++) {
+        const x = i / (GRID_RES - 1);
+        for (let j = 0; j < GRID_RES; j++) {
+          const y = j / (GRID_RES - 1);
+          for (let k = 0; k < GRID_RES; k++) {
+            const z = k / (GRID_RES - 1);
+            
+            let weightSum = 0;
+            let tempSum = 0;
+            for (let n = 0; n < allNodes.length; n++) {
+              const dx = x - allNodes[n].x;
+              const dy = y - allNodes[n].y;
+              const dz = z - allNodes[n].z;
+              const distSq = dx*dx + dy*dy + dz*dz + eps;
+              const w = 1.0 / distSq;
+              weightSum += w;
+              tempSum += w * allNodes[n].t;
+            }
+
+            xs.push(x);
+            ys.push(y);
+            zs.push(z);
+            values.push(tempSum / weightSum);
+          }
+        }
+      }
+
+      return { xs, ys, zs, values };
+    }
+
+    // 2. Camera preset controller
+    function resetCamera(preset) {
+      let camera = {};
+      if (preset === 'top') {
+        camera = { eye: { x: 0, y: 0, z: 2.2 }, up: { x: 0, y: 1, z: 0 } };
+      } else if (preset === 'side') {
+        camera = { eye: { x: 2.2, y: 0, z: 0.5 }, up: { x: 0, y: 0, z: 1 } };
+      } else {
+        camera = { eye: { x: 1.4, y: -1.4, z: 1.2 }, up: { x: 0, y: 0, z: 1 } };
+      }
+      Plotly.relayout('rack-3d-div', { 'scene.camera': camera });
+    }
+
+    // 3. Update 3D Digital Twin seamlessly using Plotly.react
+    function render3DTwin(t1, t2, t3, t4) {
+      const field = compute3DThermalField(t1, t2, t3, t4);
+
+      const volumeTrace = {
+        type: 'volume',
+        x: field.xs,
+        y: field.ys,
+        z: field.zs,
+        value: field.values,
+        isomin: 24.0,
+        isomax: 38.0,
+        cmin: 24.0,
+        cmax: 38.0,
+        opacity: 0.35,
+        surface: { count: 18 },
+        colorscale: 'Inferno',
+        colorbar: {
+          title: { text: 'Temp (°C)', font: { color: '#e2e8f0', size: 11 } },
+          tickfont: { color: '#94a3b8', size: 9 },
+          len: 0.75,
+          x: 1.02
+        }
+      };
+
+      const probeTrace = {
+        type: 'scatter3d',
+        mode: 'markers+text',
+        x: [0.5, 0.5, 0.5, 0.5],
+        y: [0.5, 0.5, 0.5, 0.5],
+        z: [0.1, 0.4, 0.7, 1.0],
+        text: [`T1: ${t1.toFixed(1)}°`, `T2: ${t2.toFixed(1)}°`, `T3: ${t3.toFixed(1)}°`, `T4: ${t4.toFixed(1)}°`],
+        textposition: 'top right',
+        textfont: { color: '#ffffff', size: 11, family: 'Inter' },
+        marker: {
+          size: 7,
+          color: [t1, t2, t3, t4],
+          colorscale: 'Inferno',
+          cmin: 24.0,
+          cmax: 38.0,
+          line: { color: '#ffffff', width: 2 }
+        },
+        hoverinfo: 'text'
+      };
+
+      const layout = {
+        uirevision: 'persist_user_camera',
+        scene: {
+          uirevision: 'persist_user_camera',
+          xaxis: { title: 'Width (X)', showbackground: false, gridcolor: 'rgba(255,255,255,0.07)' },
+          yaxis: { title: 'Depth (Y)', showbackground: false, gridcolor: 'rgba(255,255,255,0.07)' },
+          zaxis: { title: 'Height (Z)', showbackground: false, gridcolor: 'rgba(255,255,255,0.07)' },
+          aspectmode: 'cube',
+          camera: isPlotInitialized ? undefined : { eye: { x: 1.4, y: -1.4, z: 1.2 } }
+        },
+        margin: { l: 0, r: 0, b: 0, t: 15 },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        font: { color: '#94a3b8' }
+      };
+
+      const config = {
+        responsive: true,
+        displayModeBar: true,
+        displaylogo: false,
+        modeBarButtonsToRemove: ['toImage', 'sendDataToCloud']
+      };
+
+      if (!isPlotInitialized) {
+        Plotly.newPlot('rack-3d-div', [volumeTrace, probeTrace], layout, config).then(() => {
+          isPlotInitialized = true;
+        });
+      } else {
+        Plotly.react('rack-3d-div', [volumeTrace, probeTrace], layout);
+      }
+    }
+
+    // 4. Update Multi-Step Predictive Thermal Trajectory Forecaster Chart
+    function renderTrajectory(traj, currentTemp) {
+      if (!traj) return;
+
+      const histTimes = traj.history_times || [-10, -5, 0];
+      const histTemps = traj.history_temps || [currentTemp, currentTemp, currentTemp];
+      const foreTimes = traj.forecast_times || [0, 15, 30, 45, 60];
+      const foreTemps = traj.forecast_temps || [currentTemp, currentTemp, currentTemp, currentTemp, currentTemp];
+      const foreUpper = traj.forecast_upper || foreTemps.map(v => v + 0.5);
+      const foreLower = traj.forecast_lower || foreTemps.map(v => v - 0.5);
+
+      // Trace 1: Historical Actual Temperature (Solid Cyan Line)
+      const histTrace = {
+        name: 'Actual Past Telemetry',
+        x: histTimes,
+        y: histTemps,
+        mode: 'lines+markers',
+        line: { color: '#38bdf8', width: 3 },
+        marker: { size: 5, color: '#38bdf8' }
+      };
+
+      // Trace 2: Predicted Future Horizon (Dashed Purple/Amber Line)
+      const foreTrace = {
+        name: 'Taylor AR(2) Forecast',
+        x: foreTimes,
+        y: foreTemps,
+        mode: 'lines+markers',
+        line: { color: '#c084fc', width: 3, dash: 'dash' },
+        marker: { size: 6, color: '#c084fc' }
+      };
+
+      // Trace 3 & 4: Uncertainty Confidence Cone (±1.96σ area)
+      const upperTrace = {
+        name: 'Confidence Upper (+1.96σ)',
+        x: foreTimes,
+        y: foreUpper,
+        mode: 'lines',
+        line: { color: 'rgba(192, 132, 252, 0.1)', width: 0 },
+        showlegend: false
+      };
+
+      const lowerTrace = {
+        name: '95% Confidence Interval',
+        x: foreTimes,
+        y: foreLower,
+        mode: 'lines',
+        fill: 'tonexty',
+        fillcolor: 'rgba(192, 132, 252, 0.15)',
+        line: { color: 'rgba(192, 132, 252, 0.1)', width: 0 }
+      };
+
+      // Trace 5: Critical Trip Threshold Line (31.5°C)
+      const allTimes = histTimes.concat(foreTimes);
+      const minT = Math.min(...allTimes);
+      const maxT = Math.max(...allTimes);
+      const thresholdTrace = {
+        name: 'Critical Trip Threshold (31.5°C)',
+        x: [minT, maxT],
+        y: [31.5, 31.5],
+        mode: 'lines',
+        line: { color: '#ef4444', width: 2, dash: 'dot' }
+      };
+
+      const layout = {
+        uirevision: 'persist_traj_camera',
+        xaxis: {
+          title: 'Timeline (Seconds from Now)',
+          zeroline: true,
+          zerolinecolor: 'rgba(255,255,255,0.25)',
+          zerolinewidth: 2,
+          gridcolor: 'rgba(255,255,255,0.06)',
+          tickfont: { color: '#94a3b8', size: 10 }
+        },
+        yaxis: {
+          title: 'Core Temperature (°C)',
+          gridcolor: 'rgba(255,255,255,0.06)',
+          tickfont: { color: '#94a3b8', size: 10 },
+          range: [24.0, 36.0]
+        },
+        margin: { l: 45, r: 20, b: 40, t: 20 },
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        font: { color: '#94a3b8' },
+        legend: {
+          orientation: 'h',
+          x: 0,
+          y: 1.14,
+          font: { size: 10, color: '#e2e8f0' }
+        }
+      };
+
+      const config = { responsive: true, displayModeBar: false };
+
+      if (!isTrajectoryInitialized) {
+        Plotly.newPlot('trajectory-chart-div', [histTrace, upperTrace, lowerTrace, foreTrace, thresholdTrace], layout, config).then(() => {
+          isTrajectoryInitialized = true;
+        });
+      } else {
+        Plotly.react('trajectory-chart-div', [histTrace, upperTrace, lowerTrace, foreTrace, thresholdTrace], layout);
+      }
+    }
+
+    // 5. Update Explainable AI (XAI / SHAP-Style) Horizontal Progress Bars
+    function renderExplainableAI(shapData) {
+      const container = document.getElementById('shap-container');
+      if (!shapData || Object.keys(shapData).length === 0) return;
+
+      let html = '';
+      for (const [feature, pct] of Object.entries(shapData)) {
+        html += `
+          <div class="shap-row">
+            <div class="shap-label-row">
+              <span class="shap-name">✦ ${feature}</span>
+              <span class="shap-pct">${pct.toFixed(1)}%</span>
+            </div>
+            <div class="shap-bar-bg">
+              <div class="shap-bar-fill" style="width: ${pct}%;"></div>
+            </div>
+          </div>
+        `;
+      }
+      container.innerHTML = html;
+    }
+
+    // 6. Master Telemetry Fetch and Inference Update Loop
+    async function fetchTelemetry() {
+      try {
+        const res = await fetch('/data?t=' + Date.now());
+        if (!res.ok) return;
+        const data = await res.json();
+
+        const t1 = parseFloat(data.t1 || 25.0);
+        const t2 = parseFloat(data.t2 || 25.0);
+        const t3 = parseFloat(data.t3 || 25.0);
+        const t4 = parseFloat(data.t4 || 25.0);
+        const ambT = parseFloat(data.ambT || 25.0);
+        const ambH = parseFloat(data.ambH || 50.0);
+        const gas = parseInt(data.gas || 0);
+        const gasVolt = parseFloat(data.gasVolt || 0.0);
+        const vibe = parseInt(data.vibe || 0);
+        const vibeCount = parseInt(data.vibeCount || 0);
+        const ml = data.ml || {};
+
+        // Top Metrics
+        document.getElementById('val-amb-temp').textContent = `${ambT.toFixed(1)} °C`;
+        document.getElementById('val-amb-hum').textContent = `Humidity: ${ambH.toFixed(0)}%`;
+        
+        const maxTemp = Math.max(t1, t2, t3, t4);
+        let maxProbe = 'T4';
+        if (maxTemp === t1) maxProbe = 'T1';
+        else if (maxTemp === t2) maxProbe = 'T2';
+        else if (maxTemp === t3) maxProbe = 'T3';
+        
+        document.getElementById('val-peak-temp').textContent = `${maxTemp.toFixed(1)} °C`;
+        document.getElementById('val-peak-probe').textContent = `Max Probe: ${maxProbe}`;
+
+        document.getElementById('val-gas-adc').textContent = `${gas} ADC`;
+        document.getElementById('val-gas-volt').textContent = `Analog: ${gasVolt.toFixed(2)} V`;
+
+        document.getElementById('val-vibe-count').textContent = `${vibeCount} taps`;
+        document.getElementById('val-vibe-state').textContent = `Status: ${vibe === 1 ? 'VIBRATING' : 'IDLE'}`;
+
+        // Local NVS Database
+        const boot = parseInt(data.boot || 0);
+        const peakT = parseFloat(data.peakT || maxTemp);
+        const lifeShocks = parseInt(data.lifeShocks || 0);
+        const relay = parseInt(data.relay || 0);
+
+        document.getElementById('val-power-mw').textContent = `Boot #${boot}`;
+        document.getElementById('val-pue').textContent = `All-Time Peak: ${peakT.toFixed(1)} °C | Lifetime Shocks: ${lifeShocks}`;
+
+        document.getElementById('val-bus-volt').textContent = `5.00 V (MB-102)`;
+        document.getElementById('val-curr-ma').textContent = relay === 1 ? `Fan Motor: ACTIVE (~180 mA)` : `Fan Motor: STANDBY (0 mA)`;
+
+        // Probe Cards
+        document.getElementById('t4-val').textContent = `${t4.toFixed(1)} °C`;
+        document.getElementById('t3-val').textContent = `${t3.toFixed(1)} °C`;
+        document.getElementById('t2-val').textContent = `${t2.toFixed(1)} °C`;
+        document.getElementById('t1-val').textContent = `${t1.toFixed(1)} °C`;
+
+        // Render 3D Digital Twin
+        render3DTwin(t1, t2, t3, t4);
+
+        // --- UPDATE CYBER-PHYSICAL EDGE AI METRICS ---
+        const rhi = ml.health_index !== undefined ? ml.health_index : 95.0;
+        const anomalyRisk = ml.anomaly_risk_score !== undefined ? ml.anomaly_risk_score : 10.0;
+        const vel = ml.thermal_velocity_c_min !== undefined ? ml.thermal_velocity_c_min : 0.0;
+        const acc = ml.thermal_accel_c_min2 !== undefined ? ml.thermal_accel_c_min2 : 0.0;
+        const pred30 = ml.pred_t30 !== undefined ? ml.pred_t30 : maxTemp;
+        const rutt = ml.rutt_sec !== undefined ? ml.rutt_sec : 999;
+        const isPreemptive = Boolean(ml.predictive_actuation);
+
+        // 1. RHI Card
+        document.getElementById('ai-rhi-val').textContent = rhi.toFixed(1);
+        const rhiBar = document.getElementById('ai-rhi-bar');
+        rhiBar.style.width = `${rhi}%`;
+        if (rhi >= 80) {
+          rhiBar.style.background = 'linear-gradient(90deg, #10b981, #38bdf8)';
+        } else if (rhi >= 50) {
+          rhiBar.style.background = 'linear-gradient(90deg, #f59e0b, #eab308)';
+        } else {
+          rhiBar.style.background = 'linear-gradient(90deg, #ef4444, #f87171)';
+        }
+
+        // 2. Anomaly Risk Card
+        document.getElementById('ai-risk-val').textContent = anomalyRisk.toFixed(1);
+        const riskBar = document.getElementById('ai-risk-bar');
+        riskBar.style.width = `${anomalyRisk}%`;
+        const riskStatus = document.getElementById('ai-risk-status');
+        if (anomalyRisk < 30) {
+          riskStatus.textContent = 'NOMINAL';
+          riskStatus.style.color = '#10b981';
+          riskBar.style.background = 'linear-gradient(90deg, #10b981, #38bdf8)';
+        } else if (anomalyRisk < 60) {
+          riskStatus.textContent = 'DRIFT DETECTED';
+          riskStatus.style.color = '#f59e0b';
+          riskBar.style.background = 'linear-gradient(90deg, #f59e0b, #fbbf24)';
+        } else {
+          riskStatus.textContent = 'HIGH ANOMALY';
+          riskStatus.style.color = '#ef4444';
+          riskBar.style.background = 'linear-gradient(90deg, #ef4444, #dc2626)';
+        }
+
+        // 3. Thermal Derivatives
+        const velSign = vel >= 0 ? '+' : '';
+        const accSign = acc >= 0 ? '+' : '';
+        document.getElementById('ai-vel-val').textContent = `${velSign}${vel.toFixed(2)}`;
+        document.getElementById('ai-acc-val').textContent = `${accSign}${acc.toFixed(2)} °C/min²`;
+
+        // 4. Predictive Horizon & RUTT
+        document.getElementById('ai-pred30-val').textContent = pred30.toFixed(1);
+        const ruttElem = document.getElementById('ai-rutt-val');
+        const actBadge = document.getElementById('ai-actuation-badge');
+        const preemptMode = document.getElementById('ai-preemptive-mode');
+
+        if (rutt === 0) {
+          ruttElem.textContent = 'CRITICAL TRIP OCCURRED';
+          ruttElem.style.color = '#ef4444';
+        } else if (rutt < 60) {
+          ruttElem.textContent = `${rutt}s UNTIL SHUTDOWN`;
+          ruttElem.style.color = '#ef4444';
+        } else if (rutt < 300) {
+          ruttElem.textContent = `~${Math.round(rutt / 60)} min TO TRIP`;
+          ruttElem.style.color = '#f59e0b';
+        } else {
+          ruttElem.textContent = 'SAFE (>10 min)';
+          ruttElem.style.color = '#34d399';
+        }
+
+        if (isPreemptive) {
+          actBadge.textContent = 'PRE-EMPTIVE TRIGGER';
+          actBadge.style.color = '#38bdf8';
+          preemptMode.textContent = 'INERTIA DAMPING ENGAGED';
+          preemptMode.style.color = '#38bdf8';
+        } else {
+          actBadge.textContent = 'STANDBY';
+          actBadge.style.color = '#94a3b8';
+          preemptMode.textContent = 'NO INERTIA OVERRUN';
+          preemptMode.style.color = '#94a3b8';
+        }
+
+        // 5. Silicon Aging & Component RUL (Card 5)
+        const rulDays = ml.component_rul_days !== undefined ? ml.component_rul_days : 1825.0;
+        const agingFactor = ml.silicon_aging_factor !== undefined ? ml.silicon_aging_factor : 1.0;
+        document.getElementById('ai-rul-val').textContent = Math.round(rulDays);
+        const agingBadge = document.getElementById('ai-aging-badge');
+        agingBadge.textContent = `${agingFactor.toFixed(2)}x AGING`;
+        if (agingFactor > 2.0) {
+          agingBadge.style.color = '#ef4444';
+        } else if (agingFactor > 1.2) {
+          agingBadge.style.color = '#f59e0b';
+        } else {
+          agingBadge.style.color = '#38bdf8';
+        }
+        document.getElementById('ai-aging-factor').textContent = `Arrhenius (Ea=0.7 eV): ${agingFactor}x`;
+
+        // 6. Heat Removal & PUE Ratio (Card 6)
+        const pue = ml.pue_ratio !== undefined ? ml.pue_ratio : 1.080;
+        const heatWatts = ml.heat_dissipated_watts !== undefined ? ml.heat_dissipated_watts : 24.0;
+        document.getElementById('ai-pue-val').textContent = pue.toFixed(3);
+        document.getElementById('ai-heat-val').textContent = `${heatWatts.toFixed(1)} W`;
+        const pueBadge = document.getElementById('ai-pue-badge');
+        if (pue <= 1.12) {
+          pueBadge.textContent = 'HIGH EFFICIENCY';
+          pueBadge.style.color = '#34d399';
+        } else if (pue <= 1.25) {
+          pueBadge.textContent = 'STANDARD PUE';
+          pueBadge.style.color = '#f59e0b';
+        } else {
+          pueBadge.textContent = 'ELEVATED PARASITIC';
+          pueBadge.style.color = '#ef4444';
+        }
+
+        // Render Predictive Horizon Chart
+        if (ml.trajectory) {
+          renderTrajectory(ml.trajectory, maxTemp);
+        }
+
+        // Render Explainable AI Feature Attribution Bars
+        if (ml.shap_attribution) {
+          renderExplainableAI(ml.shap_attribution);
+        }
+
+        // Node indicators
+        const isHot = maxTemp >= 31.5;
+        const isVibrating = vibe === 1;
+        const isSmoke = gas > 1000;
+
+        const nTherm = document.getElementById('node-thermal');
+        nTherm.className = isHot ? 'node-indicator dot-active' : 'node-indicator dot-inactive';
+        nTherm.textContent = isHot ? '🔴 HOTSPOT' : '⚪ SAFE';
+
+        const nVibe = document.getElementById('node-vibe');
+        nVibe.className = isVibrating ? 'node-indicator dot-active' : 'node-indicator dot-inactive';
+        nVibe.textContent = isVibrating ? '🔴 SHOCK' : '⚪ IDLE';
+
+        const nGas = document.getElementById('node-gas');
+        nGas.className = isSmoke ? 'node-indicator dot-active' : 'node-indicator dot-inactive';
+        nGas.textContent = isSmoke ? '🔴 HAZARD' : '⚪ SAFE';
+
+        // Causal Status Card
+        const causalCard = document.getElementById('causal-card');
+        const causalBadge = document.getElementById('causal-badge');
+        const causalDesc = document.getElementById('causal-desc');
+
+        if (ml.state_color === 'danger') {
+          causalCard.className = 'status-card status-danger';
+        } else if (ml.state_color === 'warning') {
+          causalCard.className = 'status-card status-warning';
+        } else {
+          causalCard.className = 'status-card status-nominal';
+        }
+
+        causalBadge.textContent = ml.anomaly_state ? ml.anomaly_state.replace(/_/g, ' ') : 'SYSTEM NOMINAL';
+        causalDesc.textContent = ml.state_msg || 'All rack thermal, environmental, and mechanical nodes operating within baseline parameters.';
+
+        // Actuator (Relay) Status
+        const relayActive = (relay === 1) || isPreemptive || isHot || isSmoke;
+        const fanIcon = document.getElementById('fan-icon');
+        const actLabel = document.getElementById('actuator-label');
+
+        if (relayActive) {
+          actLabel.className = 'state-on';
+          actLabel.textContent = isPreemptive && !isHot ? 'PREDICTIVE ACTIVE (FAN ON)' : 'ACTIVE (COOLING FAN ON)';
+          fanIcon.className = 'fan-icon fan-spinning';
+        } else {
+          actLabel.className = 'state-off';
+          actLabel.textContent = 'STANDBY (RELAY OFF)';
+          fanIcon.className = 'fan-icon';
+        }
+
+      } catch (err) {
+        console.warn('Telemetry poll failed:', err);
+      }
+    }
+
+    // Interactive Fault Injection Scenario Handler (Software-in-the-Loop)
+    async function setScenario(name, btnElement) {
+      document.querySelectorAll('.scenario-btn').forEach(btn => btn.classList.remove('active'));
+      if (btnElement) {
+        btnElement.classList.add('active');
+      }
+      try {
+        const res = await fetch(`/api/scenario?name=${encodeURIComponent(name)}`);
+        const json = await res.json();
+        if (json.data) {
+          fetchTelemetry();
+        }
+      } catch (err) {
+        console.error('Scenario fetch failed:', err);
+      }
+    }
+
+    // Launch initial fetch and 1-second continuous telemetry update
+    fetchTelemetry();
+    setInterval(fetchTelemetry, 1000);
+  </script>
+</body>
+</html>
