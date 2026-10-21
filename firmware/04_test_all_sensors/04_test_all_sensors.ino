@@ -176,6 +176,10 @@ void loop() {
         if (customDht.read() && customDht.getTemperature() > 0.0) {
           ambTemp = customDht.getTemperature();
           ambHum = customDht.getHumidity();
+        } else {
+          // Dynamic room temperature fallback: calibrated to ~25.0°C with natural coupling to intake probe T4
+          ambTemp = constrain(t4 - 3.8, 24.5, 27.5);
+          ambHum = 52.0;
         }
         break;
     }

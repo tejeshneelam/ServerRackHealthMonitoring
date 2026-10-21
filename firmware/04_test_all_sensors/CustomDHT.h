@@ -42,30 +42,32 @@ public:
 
     uint8_t data[5] = {0, 0, 0, 0, 0};
 
-    // 1. Host Send Start Signal: Pull LOW for >= 18ms (works for both DHT11 and DHT22)
+    // 1. Host Send Start Signal: Pull LOW for >= 20ms
     pinMode(_pin, OUTPUT);
     digitalWrite(_pin, LOW);
-    delay(18); // 18ms LOW ensures sensor wakes up
+    delay(20); // 20ms LOW ensures sensor wakes up reliably
     digitalWrite(_pin, HIGH);
-    delayMicroseconds(30);   // 30us HIGH
+    delayMicroseconds(35);   // 35us HIGH
     pinMode(_pin, INPUT_PULLUP);
 
+    noInterrupts();
     // 2. Sensor Response: 80us LOW followed by 80us HIGH
-    if (measurePulse(LOW, 150) < 0) return false;
-    if (measurePulse(HIGH, 150) < 0) return false;
+    if (measurePulse(LOW, 250) < 0) { interrupts(); return false; }
+    if (measurePulse(HIGH, 250) < 0) { interrupts(); return false; }
 
     // 3. Read 40 Data Bits (5 Bytes)
     // Format: 50us LOW preface, followed by HIGH pulse (26-28us for '0', ~70us for '1')
     for (int i = 0; i < 40; i++) {
-      if (measurePulse(LOW, 100) < 0) return false;
-      int highDuration = measurePulse(HIGH, 120);
-      if (highDuration < 0) return false;
+      if (measurePulse(LOW, 200) < 0) { interrupts(); return false; }
+      int highDuration = measurePulse(HIGH, 200);
+      if (highDuration < 0) { interrupts(); return false; }
 
       // Threshold: > 45us is bit 1, <= 45us is bit 0
       if (highDuration > 45) {
         data[i / 8] |= (1 << (7 - (i % 8)));
       }
     }
+    interrupts();
 
     // Guard against all-zeros false reading
     if (data[0] == 0 && data[1] == 0 && data[2] == 0 && data[3] == 0) {
