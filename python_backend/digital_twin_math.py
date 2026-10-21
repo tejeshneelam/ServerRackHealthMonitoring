@@ -18,7 +18,7 @@ def generate_3d_thermal_map(t1, t2, t3, t4, grid_res=20):
     # Tier 1 (Bottom) to Tier 4 (Top)
     pts_x = np.array([0.5, 0.5, 0.5, 0.5])
     pts_y = np.array([0.5, 0.5, 0.5, 0.5])
-    pts_z = np.array([0.1, 0.4, 0.7, 1.0])
+    pts_z = np.array([1.0, 0.7, 0.4, 0.1])
     temps = np.array([t1, t2, t3, t4])
     
     # Also add "ambient" boundary conditions on the edges to force the heatmap 

@@ -962,20 +962,20 @@
       <!-- Probe Hierarchy Breakdown -->
       <div class="probe-grid">
         <div class="probe-card">
-          <div class="probe-name">Tier 4 (Top Exhaust)</div>
-          <div class="probe-temp" id="t4-val">--.- °C</div>
+          <div class="probe-name">Tier 1 (Top Exhaust)</div>
+          <div class="probe-temp" id="t1-val">--.- °C</div>
         </div>
         <div class="probe-card">
-          <div class="probe-name">Tier 3 (Upper Mid)</div>
-          <div class="probe-temp" id="t3-val">--.- °C</div>
-        </div>
-        <div class="probe-card">
-          <div class="probe-name">Tier 2 (Lower Mid)</div>
+          <div class="probe-name">Tier 2 (Upper Mid)</div>
           <div class="probe-temp" id="t2-val">--.- °C</div>
         </div>
         <div class="probe-card">
-          <div class="probe-name">Tier 1 (Bottom Intake)</div>
-          <div class="probe-temp" id="t1-val">--.- °C</div>
+          <div class="probe-name">Tier 3 (Lower Mid)</div>
+          <div class="probe-temp" id="t3-val">--.- °C</div>
+        </div>
+        <div class="probe-card">
+          <div class="probe-name">Tier 4 (Bottom Intake)</div>
+          <div class="probe-temp" id="t4-val">--.- °C</div>
         </div>
       </div>
     </div>
@@ -1039,10 +1039,10 @@
     function compute3DThermalField(t1, t2, t3, t4) {
       const xs = [], ys = [], zs = [], values = [];
       const probes = [
-        { x: 0.5, y: 0.5, z: 0.1, t: t1 }, // T1: Bottom intake
-        { x: 0.5, y: 0.5, z: 0.4, t: t2 }, // T2: Lower mid
-        { x: 0.5, y: 0.5, z: 0.7, t: t3 }, // T3: Upper mid
-        { x: 0.5, y: 0.5, z: 1.0, t: t4 }  // T4: Top exhaust
+        { x: 0.5, y: 0.5, z: 1.0, t: t1 }, // T1: Top exhaust
+        { x: 0.5, y: 0.5, z: 0.7, t: t2 }, // T2: Upper mid
+        { x: 0.5, y: 0.5, z: 0.4, t: t3 }, // T3: Lower mid
+        { x: 0.5, y: 0.5, z: 0.1, t: t4 }  // T4: Bottom intake
       ];
 
       const minTemp = Math.min(t1, t2, t3, t4);
@@ -1130,7 +1130,7 @@
         mode: 'markers+text',
         x: [0.5, 0.5, 0.5, 0.5],
         y: [0.5, 0.5, 0.5, 0.5],
-        z: [0.1, 0.4, 0.7, 1.0],
+        z: [1.0, 0.7, 0.4, 0.1],
         text: [`T1: ${t1.toFixed(1)}°`, `T2: ${t2.toFixed(1)}°`, `T3: ${t3.toFixed(1)}°`, `T4: ${t4.toFixed(1)}°`],
         textposition: 'top right',
         textfont: { color: '#ffffff', size: 11, family: 'Inter' },

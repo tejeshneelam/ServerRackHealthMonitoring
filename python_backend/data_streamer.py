@@ -4,10 +4,20 @@ import json
 import os
 from ml_engine import process_telemetry
 
-SERIAL_PORT = '/dev/cu.usbserial-0001'
+import serial.tools.list_ports
+
+DEFAULT_PORT = '/dev/cu.usbserial-0001'
 BAUD_RATE = 115200
 DATA_FILE = os.path.join(os.path.dirname(__file__), 'latest_data.json')
 TEMP_FILE = os.path.join(os.path.dirname(__file__), 'latest_data.tmp.json')
+
+def find_serial_port():
+    ports = serial.tools.list_ports.comports()
+    for p in ports:
+        dev = p.device
+        if any(keyword in dev.lower() for keyword in ["usbserial", "wch", "slab", "usbmodem", "uart"]):
+            return dev
+    return DEFAULT_PORT
 
 def get_default_data():
     return {
@@ -18,21 +28,21 @@ def get_default_data():
     }
 
 def main():
-    print(f"Starting Resilient Data Streamer on {SERIAL_PORT} @ {BAUD_RATE}")
-    
     if not os.path.exists(DATA_FILE):
         with open(DATA_FILE, 'w') as f:
             json.dump(get_default_data(), f)
 
     while True:
+        port = find_serial_port()
+        print(f"Scanning/Connecting on {port} @ {BAUD_RATE}...")
         ser = None
         try:
-            ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
+            ser = serial.Serial(port, BAUD_RATE, timeout=1)
             ser.dtr = False
             ser.rts = False
             time.sleep(1) # Settle
             ser.reset_input_buffer()
-            print("Connected! Listening for live telemetry...")
+            print(f"Connected to {port}! Listening for live telemetry...")
 
             while True:
                 line = ser.readline().decode('utf-8', errors='ignore').strip()

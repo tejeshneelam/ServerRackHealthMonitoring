@@ -234,7 +234,7 @@ void loop() {
   // --- 5. Edge Analytics: Multi-Causal Actuation (Temp, Gas, Harmful Vibe) ---
   float maxRackTemp = max(max(t1, t2), max(t3, t4));
   bool isHot = maxRackTemp >= 31.5;
-  bool isGasAlert = mqRaw >= 600;
+  bool isGasAlert = mqRaw >= 1200;
   bool emergencyTrip = isHot || isGasAlert || isHarmfulVibe;
 
   // Actuate Relay (Cooling Fan)

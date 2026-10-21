@@ -204,10 +204,10 @@ class RackMLEngine:
             rutt_sec = 999
 
         # 4. Pre-Emptive / Predictive Cooling Actuation Trigger
-        predictive_trigger = (t_max_raw >= self.trip_threshold) or (pred_t30 >= self.trip_threshold) or (gas > 1000)
+        predictive_trigger = (t_max_raw >= self.trip_threshold) or (pred_t30 >= self.trip_threshold) or (gas > 1200)
 
         # 5. Multivariate Feature Extraction
-        delta_T_vert = t4 - t1  # Vertical stratification (Stack effect)
+        delta_T_vert = t1 - t4  # Vertical stratification (Top T1 minus Bottom T4)
         delta_T_amb = t_max_raw - ambT
         vibe_energy = float(vibe * 4.0 + min(vibeCount, 6) * 0.5)
 
@@ -244,7 +244,7 @@ class RackMLEngine:
 
         # 8. Cyber-Physical Rack Health Index (RHI: 0 - 100%)
         thermal_strain = max(0.0, (t_max_raw - 29.5) / max(0.5, (self.trip_threshold - 29.5)))
-        gas_strain = max(0.0, (gas - 700.0) / 1000.0) if gas > 700 else 0.0
+        gas_strain = max(0.0, (gas - 1100.0) / 1000.0) if gas > 1100 else 0.0
         vibe_strain = 0.25 if vibe == 1 else 0.0
         
         health_raw = 100.0 * math.exp(
@@ -269,7 +269,7 @@ class RackMLEngine:
         # Heat dissipation Q = m_dot * Cp * delta_T (Air mass flow ~ 0.012 kg/s, Cp = 1005 J/kg*K)
         m_dot = 0.012
         cp_air = 1005.0
-        heat_dissipated_watts = round(m_dot * cp_air * max(0.5, t4 - t1), 1)
+        heat_dissipated_watts = round(m_dot * cp_air * max(0.5, abs(t1 - t4)), 1)
         p_it = 150.0  # Server baseline IT power (Watts)
         p_cooling = 15.0 if relay == 1 else 2.5
         pue = round((p_it + p_cooling) / p_it, 3)
@@ -281,10 +281,10 @@ class RackMLEngine:
             recent_shocks = max(0, self.history_vibe[-1] - self.history_vibe[-4])
         is_harmful_vibe = (recent_shocks >= 4) or (vibe == 1 and recent_shocks >= 2)
 
-        if gas >= 600:
+        if gas >= 1200:
             anomaly_state = "CRITICAL_GAS_HAZARD"
             state_color = "danger"
-            state_msg = f"Smoke / Combustible gas concentration exceeded critical threshold ({int(gas)} ADC >= 600 ADC). Autonomous purge sequence active."
+            state_msg = f"Smoke / Combustible gas concentration exceeded critical threshold ({int(gas)} ADC >= 1200 ADC). Autonomous purge sequence active."
         elif t_max_raw >= self.trip_threshold:
             anomaly_state = "CRITICAL_THERMAL_TRIP"
             state_color = "danger"
